@@ -36,6 +36,7 @@ project "EvoLisa"
 
     libdirs
     {
+		"vendor/lib"
     }
 
     filter "system:linux"

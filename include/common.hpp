@@ -5,40 +5,43 @@
 
 #include <iostream>
 
+using u_char = unsigned char;
+
 namespace ycel
 {
-    class Random
-    {
-    public:
-    
-        static int RandomInt(int min, int max)
-        {
-            std::uniform_int_distribution<int> distribution(min, max);
 
-            return distribution(m_Generator);
-        };
+	class Random
+	{
+	public:
 
-        static float Random01()
-        {
-            std::uniform_real_distribution<float> distribution(0.0f, 1.0f);
+		static int RandomInt(int min, int max)
+		{
+			std::uniform_int_distribution<int> distribution(min, max);
 
-            return distribution(m_Generator);
-        };
+			return distribution(m_Generator);
+		};
 
-        static float RandomAbs1()
-        {
-            std::uniform_real_distribution<float> distribution(-1.0f, 1.0f);
+		static float Random01()
+		{
+			std::uniform_real_distribution<float> distribution(0.0f, 1.0f);
 
-            return distribution(m_Generator);
-        };
+			return distribution(m_Generator);
+		};
 
-        static float RandomRange(float min, float max)
-        {
-            return min + Random01() * (max - min);
-        }
+		static float RandomAbs1()
+		{
+			std::uniform_real_distribution<float> distribution(-1.0f, 1.0f);
 
-    private:
-        static std::default_random_engine m_Generator;
-    };
+			return distribution(m_Generator);
+		};
+
+		static float RandomRange(float min, float max)
+		{
+			return min + Random01() * (max - min);
+		}
+
+	private:
+		static std::default_random_engine m_Generator;
+	};
 
 }
