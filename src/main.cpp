@@ -18,8 +18,10 @@
 
 #include "common.hpp"
 #include "image.hpp"
-#include "triangle.hpp"
+#include "polygon.hpp"
 #include "chromesome.hpp"
+
+#include "stb_image_write.h"
 
 namespace
 {
@@ -27,7 +29,8 @@ namespace
 
     ycel::Image targetImage("./assets/mona-200.bmp");
 
-    using Chromesome_t = ycel::Chromesome<50>;
+	// every polygon have V vertices, we have T polygons
+    using Chromesome_t = ycel::Chromesome<4, 50>;
     using World_t = std::array<Chromesome_t, 150>;
 
     World_t m_World;
@@ -39,67 +42,81 @@ namespace
 
 static void glInit()
 {
-    if (!glfwInit())
-        exit(EXIT_FAILURE);
+	if (!glfwInit())
+		exit(EXIT_FAILURE);
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-    // ycel::Image targetImage("./assets/mona-500.bmp");
-    std::cout << targetImage.GetWidth() << ", " << targetImage.GetHeight() << "\n";
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+	// ycel::Image targetImage("./assets/mona-500.bmp");
+	std::cout << targetImage.GetWidth() << ", " << targetImage.GetHeight() << "\n";
 
-    window = glfwCreateWindow(
-        targetImage.GetWidth(),
-        targetImage.GetHeight(),
-        "YCEL", NULL, NULL);
-    if (!window)
-    {
-        std::cerr << "Failed to create window!\n";
-        glfwTerminate();
-        exit(EXIT_FAILURE);
-    }
+	window = glfwCreateWindow(
+		targetImage.GetWidth(),
+		targetImage.GetHeight(),
+		"YCEL", NULL, NULL);
+	if (!window)
+	{
+		std::cerr << "Failed to create window!\n";
+		glfwTerminate();
+		exit(EXIT_FAILURE);
+	}
 
-    glfwMakeContextCurrent(window);
-    int status = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
-    if(!status)
-    {
-        std::cerr << "Failed to initialize glad!\n";
-    }
+	glfwMakeContextCurrent(window);
+	int status = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+	if (!status)
+	{
+		std::cerr << "Failed to initialize glad!\n";
+	}
 
-    glfwSwapInterval(0);
-    // glfwSwapInterval(1);
+	glfwSwapInterval(0);
+	// glfwSwapInterval(1);
 
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 }
 
 static uint32_t ComputeFitness(const Chromesome_t& chromesome)
 {
-    glClear(GL_COLOR_BUFFER_BIT);
-    glBegin(GL_TRIANGLES);
-    {
-        auto& primitives = chromesome.GetPrimitives();
-        for(uint32_t i = 0; i < primitives.size(); ++i)
-        {
-            hmm_vec4 color = primitives[i].GetColor();
-            glColor4f(color[0], color[1], color[2], color[3]);
+	glClear(GL_COLOR_BUFFER_BIT);
 
-            auto positions = primitives[i].GetPositions();
+	auto& primitives = chromesome.GetPrimitives();
+	for (uint32_t i = 0; i < primitives.size(); ++i)
+	{
+		glBegin(GL_POLYGON);
+		{
+			hmm_vec4 color = primitives[i].GetColor();
+			glColor4f(color[0], color[1], color[2], color[3]);
 
-            glVertex2f(positions[0].X, positions[0].Y);
-            glVertex2f(positions[1].X, positions[1].Y);
-            glVertex2f(positions[2].X, positions[2].Y);
-        }
-    }
-    glEnd();
+			auto positions = primitives[i].GetPositions();
 
-    glReadPixels(0, 0, targetImage.GetWidth(), targetImage.GetHeight(), GL_RGB, GL_UNSIGNED_BYTE, renderedData);
-    glClear(GL_COLOR_BUFFER_BIT);
+			for (uint32_t vid = 0; vid < primitives[i].GetVerticesCount(); ++vid)
+			{
+				glVertex2f(positions[vid].X, positions[vid].Y);
+			}
+		}
+		glEnd();
+	}
+
+	glReadPixels(0, 0, targetImage.GetWidth(), targetImage.GetHeight(), GL_RGB, GL_UNSIGNED_BYTE, renderedData);
+	glClear(GL_COLOR_BUFFER_BIT);
 
 	uint32_t result = targetImage.PixelDifferenceMSE(renderedData);
 
-    return result;
+	return result;
+}
+
+static void OutputImage(const std::string& fileName)
+{
+	stbi_flip_vertically_on_write(true);
+
+	glReadPixels(0, 0, targetImage.GetWidth(), targetImage.GetHeight(), GL_RGB, GL_UNSIGNED_BYTE, renderedData);
+
+	if (stbi_write_png(fileName.c_str(), targetImage.GetWidth(), targetImage.GetHeight(), 3, renderedData, 0) == 0)
+	{
+		std::cerr << "Error when saving image\n";
+	}
 }
 
 int main(int argc, char* argv[])
@@ -121,23 +138,26 @@ int main(int argc, char* argv[])
 		// Sort the chromesome and render the best
 		std::sort(m_World.begin(), m_World.end());
 
-		auto primitives = m_World[0].GetPrimitives();
-
-		glBegin(GL_TRIANGLES);
+		auto& primitives = m_World[0].GetPrimitives();
+		for (uint32_t i = 0; i < primitives.size(); ++i)
 		{
-			for (uint32_t i = 0; i < primitives.size(); ++i)
+			glBegin(GL_POLYGON);
 			{
 				hmm_vec4 color = primitives[i].GetColor();
 				glColor4f(color[0], color[1], color[2], color[3]);
 
 				auto positions = primitives[i].GetPositions();
 
-				glVertex2f(positions[0].X, positions[0].Y);
-				glVertex2f(positions[1].X, positions[1].Y);
-				glVertex2f(positions[2].X, positions[2].Y);
+				for (uint32_t vid = 0; vid < primitives[i].GetVerticesCount(); ++vid)
+				{
+					glVertex2f(positions[vid].X, positions[vid].Y);
+				}
 			}
+			glEnd();
 		}
-		glEnd();
+
+		if (iteration % 500 == 1)
+			OutputImage("./images/result_" + std::to_string(iteration-1) + ".png");
 
 		// Re-production of the next-generation chromesomes
 		World_t nextWorld;

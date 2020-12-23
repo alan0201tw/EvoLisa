@@ -3,9 +3,10 @@
 #include <cstdint>
 #include <array>
 #include <algorithm>
+#include <cmath>
 
 #include "common.hpp"
-#include "triangle.hpp"
+#include "polygon.hpp"
 
 namespace ycel
 {
@@ -18,7 +19,7 @@ namespace ycel
 		Devision
 	};
 
-	template<uint32_t T>
+	template<uint32_t V, uint32_t T>
 	class Chromesome
 	{
 	public:
@@ -27,8 +28,9 @@ namespace ycel
 		{
 			for (uint32_t i = 0; i < T; ++i)
 			{
-				std::array<hmm_vec2, 3> positions;
-				for (uint32_t vid = 0; vid < 3; ++vid)
+				// create a convex polygon
+				std::array<hmm_vec2, V> positions;
+				for (uint32_t vid = 0; vid < V; ++vid)
 				{
 					positions[vid].X = Random::RandomAbs1();
 					positions[vid].Y = Random::RandomAbs1();
@@ -41,7 +43,7 @@ namespace ycel
 				//color.A = Random::Random01();
 				color.A = 0.15f;
 
-				m_Primitives[i] = Triangle(positions, color);
+				m_Primitives[i] = Polygon(positions, color);
 			}
 
 			m_Fitness = 0;
@@ -75,7 +77,7 @@ namespace ycel
 		uint32_t GetFitness() { return m_Fitness; }
 		void UpdateFitness(uint32_t fitness) { m_Fitness = fitness; }
 
-		const std::array<Triangle, T>& GetPrimitives() const { return m_Primitives; }
+		const std::array<Polygon<V>, T>& GetPrimitives() const { return m_Primitives; }
 
 		static Chromesome Crossover(
 			const Chromesome& p0, const Chromesome& p1, CrossoverType type = CrossoverType::Devision)
@@ -109,13 +111,15 @@ namespace ycel
 		{
 			for (uint32_t i = 0; i < T; ++i)
 			{
-				for (uint32_t vid = 0; vid < 3; ++vid)
+				// iterate over V vertices
+				for (uint32_t vid = 0; vid < V; ++vid)
 				{
-					for (uint32_t dim = 0; dim < 3; ++dim)
+					// X and Y
+					for (uint32_t dim = 0; dim < 2; ++dim)
 					{
 						if (Random::Random01() < 0.75f) continue;
 
-						float posPert = 0.002f * Random::RandomAbs1();
+						float posPert = 0.02f * Random::RandomAbs1();
 
 						chromesome.m_Primitives[i].GetPositions()[vid][dim] += posPert;
 						float& val = chromesome.m_Primitives[i].GetPositions()[vid][dim];
@@ -140,9 +144,11 @@ namespace ycel
 		{
 			for (uint32_t i = 0; i < T; ++i)
 			{
-				for (uint32_t vid = 0; vid < 3; ++vid)
+				// iterate over V vertices
+				for (uint32_t vid = 0; vid < V; ++vid)
 				{
-					for (uint32_t dim = 0; dim < 3; ++dim)
+					// X and Y
+					for (uint32_t dim = 0; dim < 2; ++dim)
 					{
 						if (Random::Random01() < 0.5f) continue;
 
@@ -161,7 +167,7 @@ namespace ycel
 		}
 
 	private:
-		std::array<Triangle, T> m_Primitives;
+		std::array<Polygon<V>, T> m_Primitives;
 		uint32_t m_Fitness;
 	};
 }
