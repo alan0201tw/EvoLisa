@@ -28,3 +28,7 @@ python_binding/bin/*
 
 # allow exported file collections
 !/exports/*.mp4
+
+# ignore premake generated gmake files
+Makefile
+*.make
