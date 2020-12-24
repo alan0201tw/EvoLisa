@@ -30,7 +30,7 @@ namespace
     ycel::Image targetImage("./assets/mona-200.bmp");
 
 	// every polygon have V vertices, we have T polygons
-    using Chromesome_t = ycel::Chromesome<4, 50>;
+    using Chromesome_t = ycel::Chromesome<6, 50>;
     using World_t = std::array<Chromesome_t, 150>;
 
     World_t m_World;
