@@ -43,7 +43,7 @@ namespace ycel
 				//color.A = Random::Random01();
 				color.A = 0.15f;
 
-				m_Primitives[i] = Polygon(positions, color);
+				m_Primitives[i] = Polygon<V>(positions, color);
 			}
 
 			m_Fitness = 0;
