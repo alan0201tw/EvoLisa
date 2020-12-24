@@ -30,7 +30,7 @@ namespace
     ycel::Image targetImage("./assets/mona-200.bmp");
 
 	// every polygon have V vertices, we have T polygons
-    using Chromesome_t = ycel::Chromesome<6, 50>;
+    using Chromesome_t = ycel::Chromesome<4, 50>;
     using World_t = std::array<Chromesome_t, 150>;
 
     World_t m_World;
@@ -77,13 +77,17 @@ static void glInit()
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 }
 
-static uint32_t ComputeFitness(const Chromesome_t& chromesome)
+static void RenderChromesome(const Chromesome_t& chromesome)
 {
-	glClear(GL_COLOR_BUFFER_BIT);
-
 	auto& primitives = chromesome.GetPrimitives();
 	for (uint32_t i = 0; i < primitives.size(); ++i)
 	{
+		glEnable(GL_STENCIL_TEST);
+		glClear(GL_STENCIL_BUFFER_BIT);
+		glStencilFunc(GL_ALWAYS, 0, 1);
+		glStencilOp(GL_INVERT, GL_INVERT, GL_INVERT);
+		glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+
 		glBegin(GL_POLYGON);
 		{
 			hmm_vec4 color = primitives[i].GetColor();
@@ -97,7 +101,34 @@ static uint32_t ComputeFitness(const Chromesome_t& chromesome)
 			}
 		}
 		glEnd();
+
+		glStencilFunc(GL_EQUAL, 1, 1);
+		glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+
+		glBegin(GL_POLYGON);
+		{
+			hmm_vec4 color = primitives[i].GetColor();
+			glColor4f(color[0], color[1], color[2], color[3]);
+
+			auto positions = primitives[i].GetPositions();
+
+			for (uint32_t vid = 0; vid < primitives[i].GetVerticesCount(); ++vid)
+			{
+				glVertex2f(positions[vid].X, positions[vid].Y);
+			}
+		}
+		glEnd();
+
+		glDisable(GL_STENCIL_TEST);
 	}
+}
+
+static uint32_t ComputeFitness(const Chromesome_t& chromesome)
+{
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	RenderChromesome(chromesome);
 
 	glReadPixels(0, 0, targetImage.GetWidth(), targetImage.GetHeight(), GL_RGB, GL_UNSIGNED_BYTE, renderedData);
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -138,23 +169,7 @@ int main(int argc, char* argv[])
 		// Sort the chromesome and render the best
 		std::sort(m_World.begin(), m_World.end());
 
-		auto& primitives = m_World[0].GetPrimitives();
-		for (uint32_t i = 0; i < primitives.size(); ++i)
-		{
-			glBegin(GL_POLYGON);
-			{
-				hmm_vec4 color = primitives[i].GetColor();
-				glColor4f(color[0], color[1], color[2], color[3]);
-
-				auto positions = primitives[i].GetPositions();
-
-				for (uint32_t vid = 0; vid < primitives[i].GetVerticesCount(); ++vid)
-				{
-					glVertex2f(positions[vid].X, positions[vid].Y);
-				}
-			}
-			glEnd();
-		}
+		RenderChromesome(m_World[0]);
 
 		if (iteration % 500 == 1)
 			OutputImage("./images/result_" + std::to_string(iteration-1) + ".png");

@@ -44,6 +44,7 @@ namespace ycel
 				color.A = 0.15f;
 
 				m_Primitives[i] = Polygon<V>(positions, color);
+				m_Primitives[i].SortVertices();
 			}
 
 			m_Fitness = 0;
@@ -137,6 +138,8 @@ namespace ycel
 					float& val = chromesome.m_Primitives[i].GetColor()[dim];
 					if (val < -1.0f || val > 1.0f) val = Random::Random01();
 				}
+
+				chromesome.m_Primitives[i].SortVertices();
 			}
 		}
 
@@ -163,6 +166,8 @@ namespace ycel
 
 					chromesome.m_Primitives[i].GetColor()[dim] = Random::Random01();
 				}
+				
+				chromesome.m_Primitives[i].SortVertices();
 			}
 		}
 
