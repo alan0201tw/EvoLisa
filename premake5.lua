@@ -17,6 +17,7 @@ project "EvoLisa"
     location "."
     kind "ConsoleApp"
     language "C++"
+    toolset "clang"
     staticruntime "off"
 
     targetdir ("bin/" .. outputdir .. "/%{prj.name}")
