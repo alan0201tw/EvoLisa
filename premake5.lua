@@ -61,10 +61,9 @@ project "EvoLisa"
             "_USE_MATH_DEFINES"
         }
 
-        links
+        linkoptions
         {
-            "opengl32",
-            "glfw3"
+            "opengl32.lib glfw3.lib"
         }
 
     filter { "configurations:Debug" }
