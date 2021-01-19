@@ -17,7 +17,6 @@ project "EvoLisa"
     location "."
     kind "ConsoleApp"
     language "C++"
-    toolset "clang"
     staticruntime "off"
 
     targetdir ("bin/" .. outputdir .. "/%{prj.name}")
@@ -43,6 +42,7 @@ project "EvoLisa"
     filter "system:linux"
         cppdialect "C++17"
         systemversion "latest"
+        toolset "clang"
         links
         {
             "GL",
